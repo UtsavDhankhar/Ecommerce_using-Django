@@ -1,9 +1,8 @@
 from django.http import HttpResponse
 from django.shortcuts import render , redirect
-from store.models import Product
+from store.models import Product , Variation
 from .models import Cart , CartItem
 
-# Create your views here.
 
 def _cart_id(request):
 
@@ -18,29 +17,71 @@ def _cart_id(request):
 def add_cart(request , product_id):
 
     product = Product.objects.get(id=product_id)
+    product_variation = []
+
+    if(request.method == "POST"):
+        
+        for item in request.POST:
+            value = request.POST.get(item) 
+            try:
+                variation = Variation.objects.get(product = product , variation_category__iexact = item , variation_value__iexact = value)
+                product_variation.append(variation)
+                print(product_variation)
+            except:
+                pass
 
     try:
         cart = Cart.objects.get(cart_id = _cart_id(request))
 
     except Cart.DoesNotExist:
-
         cart = Cart.objects.create(
             cart_id = _cart_id(request),
-        )
-    
+        )  
     cart.save()
 
-    try:
-        cart_item = CartItem.objects.get(product=product , cart = cart)
-        cart_item.quantity += 1
-        cart_item.save()
+
+    is_cart_item_exits = CartItem.objects.filter(product = product , cart = cart)
     
-    except CartItem.DoesNotExist:
+    if is_cart_item_exits:
+        cart_item = CartItem.objects.filter(product = product , cart = cart)
+
+        exist_var_list = []
+        id = []
+
+        for item in cart_item:
+            existin_variation = item.variations.all()
+            exist_var_list.append(list(existin_variation))
+            id.append(item.id)
+        
+        if product_variation in exist_var_list:
+            index = exist_var_list.index(product_variation)
+            cart_item[index].quantity +=1
+            cart_item[index].save()
+        
+        else:
+            cart_item = CartItem.objects.create(
+                product = product,
+                cart = cart,
+                quantity = 1
+            )
+            if len(product_variation):
+                cart_item.variations.clear()
+                # for item in product_variation:
+                #     cart_item.variations.add(item)
+                cart_item.variations.add(*product_variation) # instead of for loop just add *in front of list to add complete list
+
+            cart_item.save()
+    
+    else:
         cart_item = CartItem.objects.create(
             product = product,
             cart = cart,
             quantity = 1
         )
+
+        if len(product_variation):
+            for item in product_variation:
+                cart_item.variations.add(item)
 
         cart_item.save()
 
@@ -48,11 +89,11 @@ def add_cart(request , product_id):
 
 
 
-def remove_cart(request , product_id):
+def remove_cart(request , product_id , cart_item_id):
     
     cart = Cart.objects.get(cart_id = _cart_id(request))
     product = Product.objects.get(id = product_id)
-    cart_item = CartItem.objects.get(cart = cart , product = product)
+    cart_item = CartItem.objects.get(cart = cart , product = product , id = cart_item_id) # since id is unique cart_item_id would have been enough
 
     if(cart_item.quantity > 1):
         cart_item.quantity -= 1
@@ -65,11 +106,11 @@ def remove_cart(request , product_id):
     return redirect('cart')
 
 
-def remove(request , product_id):
+def remove(request , product_id , cart_item_id):
 
     cart = Cart.objects.get(cart_id = _cart_id(request))
     product = Product.objects.get(id = product_id)
-    cart_item = CartItem.objects.get(cart= cart , product = product)
+    cart_item = CartItem.objects.get(cart= cart , product = product , id = cart_item_id)
 
     cart_item.delete()
 
@@ -79,24 +120,32 @@ def remove(request , product_id):
 
 def cart(request):
 
-    cart = Cart.objects.get(cart_id = _cart_id(request))
+    try:
+        cart = Cart.objects.get(cart_id = _cart_id(request))
 
-    cart_items = CartItem.objects.filter(cart = cart)
+        cart_items = CartItem.objects.filter(cart = cart)
 
-    quantity = 0
-    total_price = 0
+        quantity = 0
+        total_price = 0
 
-    for item in cart_items:
-        quantity += item.quantity
-        total_price += item.product.price * item.quantity
-    
-    tax = (total_price*8)/100
+        for item in cart_items:
+            quantity += item.quantity
+            total_price += item.product.price * item.quantity
+        
+        tax = (total_price*8)/100
 
-    total_after_tax = total_price + tax
+        total_after_tax = total_price + tax
+
+    except Cart.DoesNotExist:
+        tax = 0
+        quantity = 0
+        total_price  = 0
+        total_after_tax = 0
+        cart_items = None
+
 
 
     page_dict = {
-        'cart' : cart,
         'cart_items' : cart_items,
         'quantity' : quantity,
         'total_price' : total_price,
