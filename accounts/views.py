@@ -13,6 +13,12 @@ from django.core.mail import EmailMessage
 from django.contrib.auth.tokens import default_token_generator
 from django.conf import settings
 
+#for cart
+from carts.models import Cart , CartItem
+from carts.views import _cart_id
+
+import requests # download using pip install requests
+
 
 def mail(request , user , email , mail_subject , link):
 
@@ -80,11 +86,57 @@ def login(request):
         user = auth.authenticate(email = email , password = password)
 
         if user is not None:
-            auth.login(request , user)
+            try:
+                cart = Cart.objects.get(cart_id = _cart_id(request))
+                if CartItem.objects.filter(cart = cart).exists():
+                    cart_items = CartItem.objects.filter(cart = cart)
 
+                    product_variations = []
+                    for item in cart_items:
+                        variation = item.variations.all()
+                        product_variations.append(list(variation))
+                    
+                    cart_items = CartItem.objects.filter(user = user)
+                    exist_var_list = []
+                    id = []
+
+                    for item in cart_items:
+                        existin_variation = item.variations.all()
+                        exist_var_list.append(list(existin_variation))
+                        id.append(item.id)
+
+                    
+                    for i in product_variations:
+                        if i in exist_var_list:
+                            index = exist_var_list.index(i)
+                            item_id = id[index]
+                            item = CartItem.objects.get(id = item_id)
+                            item.quantity +=1
+                            item.user = user
+                            item.save()
+                        
+                        else:
+                            cart_items = CartItem.objects.filter(cart = cart)
+                            for item in cart_items:
+                                item.user = user
+                                # item.cart.clear()
+                                item.save()            
+            except:
+                pass
+
+            auth.login(request , user)
             messages.success(request , 'Account is Logged In')
-            
-            return redirect('dashboard')
+            url = request.META.get('HTTP_REFERER')  # this will give the url of page from which request was called.
+            try:
+                query = requests.utils.urlparse(url).query
+                params = dict(x.split('=') for x in query.split('&'))
+
+                if 'next' in params:
+                    nextPage = params['next']
+                    return redirect(nextPage)
+
+            except:
+                return redirect('dashboard')
 
         else:
 
