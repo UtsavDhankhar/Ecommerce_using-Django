@@ -5,10 +5,11 @@
 {% include 'includes/header.html' %}
 
 
+
     <!-- ============================ COMPONENT 1 ================================= -->
     <section class="section-content padding-y bg">
     <div class="container">
-    <form action = "{% url 'checkout' %}" method = 'POST'>
+<form action = "{% url 'place_order' %}" method = 'POST'>
     {% csrf_token %}
     <div class="row">
         <aside class="col-lg-7">
@@ -16,26 +17,17 @@
                         <div class="item-option-select">
                           <h6>Select Address</h6>
                           <div class="btn-group btn-group-sm btn-group-toggle" data-toggle="buttons">
-        
-                            {% for address in addresses %}
-                            
-                            <label class="btn btn-light">
-                              <input type="radio" name="Address" value = "{{address}}" required /> {{address.first_name | capfirst}}{{address.last_name}}
-                              <br>
-                              {{address.address_line}}
-                            </label>
-                        
-                            {% endfor %}
-                           
+                            {{form.address}}
                           </div>
+                          <a href="{% url 'address_page' %}" class="btn btn-outline-primary"> Add Address</a>
                         </div>
                       </div>
-                    <a href="{% url 'address_page' %}" class="btn btn-outline-primary"> Add Address</a>
+                    
                     <br><br>
                     <div class="form-row">
                         <div class="col form-group">
                             <label>Order Note</label>
-                                <input type="text">
+                                {{form.order_note}}
                         </div> <!-- form-group end.// -->
                     </div>
                     
@@ -90,7 +82,7 @@
                     </table>
             <div class="card-body">
                 
-                <button class="btn btn-primary btn-block"> Place Order </button>
+                <button class="btn btn-primary btn-block" type="submit"> Place Order </button>
 
                 <a href="{% url 'store' %}" class="btn btn-light btn-block">Continue Shopping</a>
             </div> <!-- card-body.// -->

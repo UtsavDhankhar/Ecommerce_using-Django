@@ -5,6 +5,7 @@ from .models import Cart , CartItem , address
 from .forms import AddressForm
 from django.contrib.auth.decorators import login_required
 from .forms import AddressForm
+from orders.forms import OrderForm
 
 
 def _cart_id(request):
@@ -237,7 +238,7 @@ def checkout(request):
         # cart = Cart.objects.get(cart_id = _cart_id(request))
         cart_items = CartItem.objects.filter(user = request.user)
         addresses  = address.objects.filter(user = request.user)
-        print(addresses)
+        form = OrderForm()
 
         quantity = 0
         total_price = 0
@@ -267,6 +268,7 @@ def checkout(request):
         'total_after_tax' : total_after_tax,
         'path' : request.path,
         'addresses' : addresses,
+        'form': form,
 
     }
 

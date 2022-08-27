@@ -39,6 +39,11 @@ class address(models.Model):
     state = models.CharField(max_length=50)
     country = models.CharField(max_length=50)
 
+    def full_name(self):
+        return self.first_name + ' ' + self.last_name
+
+    def full_address(self):
+        return f'{self.address_line}  {self.address_line_2}'
 
     def __str__(self):
         return self.first_name + self.last_name

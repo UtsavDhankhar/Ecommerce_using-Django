@@ -39,7 +39,7 @@ class Order(models.Model):
     updaed_at = models.DateTimeField(auto_now = True)
 
     def __str__(self):
-        return self.user.first_name
+        return self.address.first_name + self.address.last_name
 
     
 class OrderProduct(models.Model):
