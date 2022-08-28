@@ -52,40 +52,39 @@ def place_order(request):
 
     if(request.method == 'POST'):
         print("in post")
-        form = OrderForm(request.POST)
+        address_id = request.POST['address']
+        address_order = address.objects.get(id = address_id)
 
-        if form.is_valid():
-            data = Order()
-            data.address = form.cleaned_data['address']
-            data.order_note = form.cleaned_data['order_note']
-            data.order_total = grand_total
-            data.tax = tax
-            data.ip = request.META.get('REMOTE_ADDR')
-            data.user = request.user
-            data.save()
-
-            #using data id and unix timestamp to generate unique order id
-            date = datetime.datetime.utcnow()
-            utc_time = calendar.timegm(date.utctimetuple())
-            order_number = str(utc_time) + str(data.id)
-            data.order_number = order_number
-            data.save()
-
-            order = Order.objects.get(user = current_user , is_ordered = False , order_number = order_number)
-            
-            page_dict = {
-                'order' : order,
-                'cart_items' : cart_items,
-                'total' : total,
-                'tax' : tax,
-                'gtotal' : grand_total,
-            }
-
-            return render(request , 'orders/payment.html' , page_dict)
+        data = Order(
+            user = request.user,
+            address = address_order,
+            order_note = request.POST['order_note'],
+            order_total = grand_total,
+            tax = tax,
+            ip = request.META.get('REMOTE_ADDR')
+        )
         
-        else:
-            return redirect('home')
+        data.save()
+
+        #using data id and unix timestamp to generate unique order id
+        date = datetime.datetime.utcnow()
+        utc_time = calendar.timegm(date.utctimetuple())
+        order_number = str(utc_time) + str(data.id)
+        data.order_number = order_number
+        data.save()
+
+        order = Order.objects.get(user = current_user , is_ordered = False , order_number = order_number)
         
+        page_dict = {
+            'order' : order,
+            'cart_items' : cart_items,
+            'total' : total,
+            'tax' : tax,
+            'gtotal' : grand_total,
+        }
+
+        return render(request , 'orders/payment.html' , page_dict)
+          
     else:
         return redirect('home')
 

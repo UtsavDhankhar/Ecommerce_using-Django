@@ -240,6 +240,8 @@ def checkout(request):
         addresses  = address.objects.filter(user = request.user)
         form = OrderForm()
 
+        print(addresses)
+
         quantity = 0
         total_price = 0
 

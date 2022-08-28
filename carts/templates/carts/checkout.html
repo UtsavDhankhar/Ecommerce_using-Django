@@ -17,12 +17,17 @@
                         <div class="item-option-select">
                           <h6>Select Address</h6>
                           <div class="btn-group btn-group-sm btn-group-toggle" data-toggle="buttons">
-                            {{form.address}}
+                            {% for address in addresses %}
+                            <label class="btn btn-light">
+                                <input type="radio" name="address" value = "{{address.id}}" required /> {{address.full_name| capfirst}}
+                                <br> {{address.full_address}}
+                              </label>
+                            {% endfor %}
+                            
                           </div>
-                          <a href="{% url 'address_page' %}" class="btn btn-outline-primary"> Add Address</a>
                         </div>
                       </div>
-                    
+                      <a href="{% url 'address_page' %}" class="btn btn-outline-primary"> Add Address</a>
                     <br><br>
                     <div class="form-row">
                         <div class="col form-group">
